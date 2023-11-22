@@ -15,4 +15,4 @@
 #### Temos as página de login onde o cliente entra em sua conta,Login.html 
 
 ## Dentro da pasta Acesso, contém Home Koi Bank.pdf e Pagina abertura de conta Koi Bank.pdf foi criado no figma, onde fizemos o layout da página do nosso projeto.
-#### Tela inicial: https://gabrielzambaldi.github.io/KoiBank/.
+#### Tela inicial: https://github.com/GabrielZambaldi/KoiBankBackend.
