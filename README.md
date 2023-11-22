@@ -9,7 +9,7 @@
 # SOBRE O PROJETO:
 
 ## Nosso projeto é um banco digital, onde temos cadastros de clientes, programas de benefícios, consultoria, rendimentos, e investimentos.
-#### O backend irá contemplar alguns APIs aprendidos em sala de aula e um CRUD.
+#### O backend irá contemplar algumas APIs que foram vista em sala de aula e um CRUD.
 
 ## Dentro da pasta HTML: 
 #### Temos as página de login onde o cliente entra em sua conta,Login.html 
