@@ -6,7 +6,7 @@ CORS(app)  # Configuração do CORS
 
 @app.route('/')
 def index():
-    return 'Bem-vindo ao backend do KoiBank!'
+    return 'Bem-vindo ao backend do KoiBankss!'
 
 @app.route('/processar_formulario', methods=['POST'])
 def processar_formulario():
