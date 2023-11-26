@@ -97,13 +97,20 @@ def login():
             usuario = Usuario.query.filter_by(cpf=dados_do_formulario['cpf'], senha=dados_do_formulario['senha']).first()
 
             if usuario:
-                return jsonify({'mensagem': 'Login bem-sucedido!'})
+                return jsonify({'mensagem': 'Login bem-sucedido!', 'id_usuario': usuario.id})
             else:
-                return jsonify({'erro': 'Credenciais incorretas'}), 401  # 401 é o código de status para não autorizado
+                return jsonify({'erro': 'Credenciais incorretas'}), 401
 
         except Exception as e:
-            # Se ocorrer um erro, retorna uma mensagem de erro
-            return jsonify({'erro': str(e)}), 500  # 500 é o código de status para erro interno do servidor
+            return jsonify({'erro': str(e)}), 500
+
+# Rota para obter mensagens personalizadas com base no ID do usuário
+@app.route('/mensagens/<int:id_usuario>', methods=['GET'])
+@cross_origin()
+def obter_mensagens_personalizadas(id_usuario):
+    # Lógica para obter mensagens personalizadas com base no id_usuario
+    # Por enquanto, retornaremos uma mensagem fixa como exemplo
+    return jsonify({'mensagem_personalizada': f'Olá, usuário {id_usuario}! Bem-vindo de volta!'})
 
 if __name__ == '__main__':
     app.run(debug=True)
