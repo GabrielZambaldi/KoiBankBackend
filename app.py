@@ -7,6 +7,9 @@ import os
 app = Flask(__name__)
 CORS(app)
 
+app = Flask(__name__)
+CORS(app, resources={r"/login": {"origins": "http://127.0.0.1:5501"}})  # Ajuste a rota conforme necessário
+
 # Configuração do banco de dados SQLite
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'instance', 'bancos.db')
@@ -15,7 +18,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # Inicialize a instância db com o aplicativo Flask
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
-CORS(app, resources={r"/cadastrar": {"origins": "http://127.0.0.1:5501"}})
 
 # Defina seu modelo de usuário
 class Usuario(db.Model):
@@ -52,6 +54,10 @@ def cadastrar():
     try:
         dados_do_formulario = request.get_json()
 
+        # Verifique se o CPF já está em uso
+        if Usuario.query.filter_by(cpf=dados_do_formulario['cpf']).first():
+            return jsonify({'erro': 'CPF já cadastrado'}), 400  # 400 é o código de status para solicitação inválida
+
         # Crie um novo objeto Usuario a partir dos dados do formulário
         novo_usuario = Usuario(
             primeiro_nome=dados_do_formulario['primeiroNome'],
@@ -65,13 +71,39 @@ def cadastrar():
         db.session.add(novo_usuario)
         db.session.commit()
 
-        # Retornar uma resposta em JSON com o ID atribuído e a mensagem de sucesso
+        # Exemplo: Retornar uma resposta em JSON com o ID atribuído
         return jsonify({'id': novo_usuario.id, 'mensagem': 'Cadastro realizado com sucesso!'})
 
     except Exception as e:
         # Se ocorrer um erro, retorna uma mensagem de erro
         return jsonify({'erro': str(e)}), 500  # 500 é o código de status para erro interno do servidor
 
-# Executar o aplicativo Flask
+# Rota para fazer login
+@cross_origin()
+@app.route('/login', methods=['POST', 'OPTIONS'])
+@cross_origin()
+def login():
+    if request.method == 'OPTIONS':
+        response = make_response()
+        response.headers.add("Access-Control-Allow-Origin", "http://127.0.0.1:5501")
+        response.headers.add("Access-Control-Allow-Methods", "POST")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type")
+        return response
+    elif request.method == 'POST':
+        try:
+            dados_do_formulario = request.get_json()
+
+            # Verifique se o usuário com o CPF e senha fornecidos existe no banco de dados
+            usuario = Usuario.query.filter_by(cpf=dados_do_formulario['cpf'], senha=dados_do_formulario['senha']).first()
+
+            if usuario:
+                return jsonify({'mensagem': 'Login bem-sucedido!'})
+            else:
+                return jsonify({'erro': 'Credenciais incorretas'}), 401  # 401 é o código de status para não autorizado
+
+        except Exception as e:
+            # Se ocorrer um erro, retorna uma mensagem de erro
+            return jsonify({'erro': str(e)}), 500  # 500 é o código de status para erro interno do servidor
+
 if __name__ == '__main__':
     app.run(debug=True)
