@@ -1,14 +1,12 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
 from flask_cors import CORS, cross_origin
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
+from cpf_generator import CPF
 import os
 
 app = Flask(__name__)
 CORS(app)
-
-app = Flask(__name__)
-CORS(app, resources={r"/login": {"origins": "http://127.0.0.1:5501"}})  # Ajuste a rota conforme necessário
 
 # Configuração do banco de dados SQLite
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -19,6 +17,28 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
 
+def retrieve_usuario(id):
+    # Lógica para recuperar detalhes do usuário do banco de dados
+    # Aqui você usaria SQLAlchemy ou outra biblioteca de acesso ao banco de dados
+    # para obter os detalhes do usuário com base no ID fornecido.
+
+    # Suponha que você tenha uma classe de modelo Usuario
+    # e uma instância chamada usuario
+    usuario = Usuario.query.get(id)
+
+    if usuario:
+        # Se o usuário for encontrado, você pode retornar seus detalhes como JSON
+        return jsonify({
+            'id': usuario.id,
+            'primeiro_nome': usuario.primeiro_nome,
+            'ultimo_nome': usuario.ultimo_nome,
+            'cpf': usuario.cpf,
+            'email': usuario.email
+        })
+    else:
+        # Se o usuário não for encontrado, você pode retornar uma mensagem adequada
+        return jsonify({'mensagem': 'Usuário não encontrado'}), 404
+    
 # Defina seu modelo de usuário
 class Usuario(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -112,5 +132,97 @@ def obter_mensagens_personalizadas(id_usuario):
     # Por enquanto, retornaremos uma mensagem fixa como exemplo
     return jsonify({'mensagem_personalizada': f'Olá, usuário {id_usuario}! Bem-vindo de volta!'})
 
+
+# Rota para obter todos os usuários
+@app.route('/api/usuarios', methods=['GET'])
+@cross_origin()
+def obter_usuarios():
+    usuarios = Usuario.query.all()
+    return usuarios_schema.jsonify(usuarios)
+
+# Rota para criar um novo usuário
+@app.route('/api/usuarios', methods=['POST'])
+@cross_origin()
+def criar_usuario():
+    dados_do_formulario = request.get_json()
+    
+    novo_usuario = Usuario(
+        primeiro_nome=dados_do_formulario['primeiro_nome'],
+        ultimo_nome=dados_do_formulario['ultimo_nome'],
+        cpf=dados_do_formulario['cpf'],
+        senha=dados_do_formulario['senha'],
+        email=dados_do_formulario['email'],
+    ) 
+
+    db.session.add(novo_usuario)
+    db.session.commit()
+    
+    return jsonify({'mensagem': 'Usuário criado com sucesso!'})
+
+# Rota para atualizar um usuário existente
+@app.route('/api/usuarios/<int:id>', methods=['PUT'])
+@cross_origin()
+def atualizar_usuario(id):
+    usuario = Usuario.query.get(id)
+
+    if not usuario:
+        return jsonify({'erro': 'Usuário não encontrado'}), 404
+
+    dados_do_formulario = request.get_json()
+
+    usuario.primeiro_nome = dados_do_formulario['primeiro_nome']
+    usuario.ultimo_nome = dados_do_formulario['ultimo_nome']
+    usuario.cpf = dados_do_formulario['cpf']
+    usuario.senha = dados_do_formulario['senha']
+    usuario.email = dados_do_formulario['email']
+
+    db.session.commit()
+
+    return jsonify({'mensagem': 'Usuário atualizado com sucesso!'})
+
+# Rota para excluir um usuário
+@app.route('/api/usuarios/<int:id>', methods=['DELETE'])
+@cross_origin()
+def excluir_usuario(id):
+    usuario = Usuario.query.get(id)
+
+    if not usuario:
+        return jsonify({'erro': 'Usuário não encontrado'}), 404
+
+    db.session.delete(usuario)
+    db.session.commit()
+
+    return jsonify({'mensagem': 'Usuário excluído com sucesso!'})
+
+# Rota para deletar um usuário pelo ID
+@cross_origin()
+@app.route('/deletar_usuario/<int:id>', methods=['DELETE'])
+def deletar_usuario(id):
+    usuario = Usuario.query.get(id)
+
+    if not usuario:
+        return jsonify({'erro': 'Usuário não encontrado'}), 404  # 404 é o código de status para "não encontrado"
+
+    db.session.delete(usuario)
+    db.session.commit()
+
+    return jsonify({'mensagem': 'Usuário deletado com sucesso'})
+
+
+@app.route('/api/usuarios/detalhes/<int:id>', methods=['GET'])
+@cross_origin()
+def obter_detalhes_usuario(id):
+    return retrieve_usuario(id)   
+
+@app.route('/api/usuarios/<int:id>', methods=['GET'])
+@cross_origin()
+def obter_usuario(id):
+    usuario = Usuario.query.get(id)
+
+    if not usuario:
+        return jsonify({'erro': 'Usuário não encontrado'}), 404
+
+    return usuario_schema.jsonify(usuario)
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5004)
