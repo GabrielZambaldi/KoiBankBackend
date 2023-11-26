@@ -2,7 +2,9 @@ from flask import Flask, request, jsonify, make_response
 from flask_cors import CORS, cross_origin
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
-from cpf_generator import CPF
+import random 
+import string
+
 import os
 
 app = Flask(__name__)
@@ -16,6 +18,16 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # Inicialize a instância db com o aplicativo Flask
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
+
+def gerar_cpf():
+    cpf = ''.join(random.choices(string.digits, k=11))
+    return f'{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}'
+
+# Função para gerar uma senha aleatória
+def gerar_senha():
+    caracteres = string.ascii_letters + string.digits + string.punctuation
+    senha = ''.join(random.choices(caracteres, k=12))
+    return senha
 
 def retrieve_usuario(id):
     # Lógica para recuperar detalhes do usuário do banco de dados
@@ -80,12 +92,12 @@ def cadastrar():
 
         # Crie um novo objeto Usuario a partir dos dados do formulário
         novo_usuario = Usuario(
-            primeiro_nome=dados_do_formulario['primeiroNome'],
-            ultimo_nome=dados_do_formulario['ultimoNome'],
-            cpf=dados_do_formulario['cpf'],
-            senha=dados_do_formulario['senha'],
-            email=dados_do_formulario['email'],
-        )
+    primeiro_nome='Novo',
+    ultimo_nome='Usuário',
+    cpf=gerar_cpf(),
+    senha=gerar_senha(),
+    email='novo.usuario@example.com',
+)
 
         # Adicione o novo usuário ao banco de dados
         db.session.add(novo_usuario)
@@ -144,15 +156,16 @@ def obter_usuarios():
 @app.route('/api/usuarios', methods=['POST'])
 @cross_origin()
 def criar_usuario():
+    print('Recebendo solicitação para criar usuário...')
     dados_do_formulario = request.get_json()
-    
+    print('Dados do formulário:', dados_do_formulario)
     novo_usuario = Usuario(
-        primeiro_nome=dados_do_formulario['primeiro_nome'],
-        ultimo_nome=dados_do_formulario['ultimo_nome'],
-        cpf=dados_do_formulario['cpf'],
-        senha=dados_do_formulario['senha'],
-        email=dados_do_formulario['email'],
-    ) 
+    primeiro_nome='Novo',
+    ultimo_nome='Usuário',
+    cpf=gerar_cpf(),
+    senha=gerar_senha(),
+    email='novo.usuario@example.com',
+)
 
     db.session.add(novo_usuario)
     db.session.commit()
